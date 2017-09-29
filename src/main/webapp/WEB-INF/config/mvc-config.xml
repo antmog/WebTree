@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/mvc
+	   http://www.springframework.org/schema/mvc/spring-mvc.xsd
+	   http://www.springframework.org/schema/context
+	   http://www.springframework.org/schema/context/spring-context.xsd">
+
+
+    <!-- context:component-scan This tag will scan @Component, @Repository, @Service, @Controller
+         and also resolves @Autowired and @Qualifier -->
+
+    <context:component-scan base-package="tree.mvc" />
+
+
+    <!-- ViewResolver bean config for mapping strings to jsp views -->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <!-- Example: a logical view name of 'showMessage' is mapped to '/WEB-INF/jsp/showMessage.jsp' -->
+        <property name="prefix" value="/WEB-INF/views/" />
+        <property name="suffix" value=".jsp" />
+    </bean>
+
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/*"/>
+            <bean class="tree.mvc.interceptors.SiteInterceptor"/>
+        </mvc:interceptor>
+    </mvc:interceptors>
+
+    <!--find property file. See bean id='dataSource' -->
+    <context:property-placeholder location="classpath:application.properties" />
+    <!-- XML Bean Definitions -->
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <property name="driverClassName" value="${jdbc.driverClassName}"/>
+    </bean>
+
+    <bean id = "transactionManager"
+          class = "org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name = "dataSource"  ref = "dataSource" />
+    </bean>
+
+    <!-- Definition for studentJDBCTemplate bean -->
+    <bean id = "studentJDBCTemplate"
+          class = "tree.mvc.jdbc.Jdbc">
+        <property name = "dataSource" ref = "dataSource" />
+        <property name = "transactionManager" ref = "transactionManager" />
+    </bean>
+
+    <mvc:resources mapping="/resources/**" location="/resources/"  cache-period="31556926"/>
+    <mvc:annotation-driven />
+</beans>
