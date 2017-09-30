@@ -8,7 +8,6 @@
     <!-- 2 load the theme CSS file -->
 </head>
 <body>
-<h3><a href="/tree">tree</a></h3>
-
+<h3><a href="/tree">Tree Application (click me).</a></h3>
 </body>
 </html>

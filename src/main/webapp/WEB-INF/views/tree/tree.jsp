@@ -3,29 +3,29 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <title>BENIS HEHE</title>
+    <title>Tree application.</title>
 
     <spring:url value="/resources/contextmenu/css/contextMenu.css" var="contextMenu"/>
     <link href="${contextMenu}" rel="stylesheet"/>
 
     <spring:url value="/resources/jstree/themes/default/style.min.css" var="treeCss"/>
     <link href="${treeCss}" rel="stylesheet"/>
-
 </head>
 <body>
-
-<h2>Enter developer information</h2>
-<div id="kkk">
+<h2>Welcome.</h2>
+<div id="tree-container" class="tree-container">
     <div id="jstree">
     </div>
+    <p id = "operation-result" class="operation-result"></p>
 </div>
 
 <button id="butt">Reload tree</button>
 
-<textarea id="textBox" class="actionBlock"></textarea>
-<button id="textOk" class="actionBlock">Ok</button>
-<button id="textCancel" class="actionBlock">Cancel</button>
-
+<div id="action-block" class="action-block">
+    <textarea id="action-block__text-box" class="action-block__text-box"></textarea>
+    <button id="action-block__text-ok" class="action-block__text-ok">Ok</button>
+    <button id="action-block__text-cancel" class="action-block__text-cancel">Cancel</button>
+</div>
 <nav id="context-menu" class="context-menu">
     <ul class="context-menu__items">
         <li class="context-menu__item">
@@ -39,7 +39,6 @@
         </li>
     </ul>
 </nav>
-
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js"></script>
 <script>
@@ -66,27 +65,9 @@
                 }
             });
         }
-
         init();
         $("#butt").click(function () {
             $('#jstree').jstree(true).refresh();
-        });
-        $('#jstree').on("move_node.jstree", function (e, data) {
-            $.ajax({
-                type: "get",
-                cache: false,
-                url: "/jdbc/actionItem/",
-                success: function (data) {
-                    $('#jstree').jstree(true).refresh();
-                    if(data === "true"){
-                        alert("Operation succeed.");
-                    }else{
-                        alert("Operation failed.");
-                    }
-                },
-                data: { id: data.node.id , action: "Dnd", newParent: data.parent, oldParent: data.old_parent },
-                dataType: "text"
-            });
         });
     });
 </script>

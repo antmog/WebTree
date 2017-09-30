@@ -1,9 +1,8 @@
 <html>
 <head>
-    <title>Title</title>
-  GABELA
+    <title>Error Page.</title>
 </head>
 <body>
-
+Default error page.
 </body>
 </html>

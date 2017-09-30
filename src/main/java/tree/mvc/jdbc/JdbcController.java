@@ -29,12 +29,13 @@ public class JdbcController {
     Jdbc jdbc;
 
     private void createJdbcNode(){
-        jdbc=(Jdbc)appContext.getBean("studentJDBCTemplate");
+        jdbc=(Jdbc)appContext.getBean("jdbcTemplate");
     }
 
     @RequestMapping(value = "/jdbc/getRoot", method = RequestMethod.GET)
     public String getRootsJSON()
     {
+        // Creating JDBC node here, when initialising tree.
         createJdbcNode();
         return jdbc.getRootNodes();
     }
@@ -54,7 +55,6 @@ public class JdbcController {
     @RequestMapping(value = "/jdbc/actionItem/", method = RequestMethod.GET)
     public String actionItemJSON(HttpServletRequest request)
     {
-        System.out.println(request.getParameter("action"));
         switch (request.getParameter("action")) {
             case "Create":
                 return jdbc.createNode(request.getParameter("id"),request.getParameter("name"));
@@ -74,7 +74,7 @@ public class JdbcController {
                 }
                 return jdbc.moveNode(request.getParameter("id"),request.getParameter("newParent"),request.getParameter("oldParent"));
             default:
-                System.out.println("shock");
+                System.out.println("Wrong command.");
                 break;
         }
         return "false";

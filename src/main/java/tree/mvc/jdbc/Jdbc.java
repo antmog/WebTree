@@ -30,57 +30,86 @@ public class Jdbc {
         this.transactionManager = transactionManager;
     }
 
+    /**
+     * Select all nodes. (unused)
+     * @return
+     */
     public String queryAllNodes() {
         final String QUERY_SQL = "SELECT * FROM treenodes ORDER BY id";
         return Selector(QUERY_SQL, jdbcTemplate).toString();
     }
 
+    /**
+     * getRootNodes
+     * @return String (json watch CustomTreeNode.toString())
+     */
     public String getRootNodes() {
         String result;
         TransactionDefinition def = new DefaultTransactionDefinition();
         TransactionStatus status = transactionManager.getTransaction(def);
         try {
             final String QUERY_SQL = "SELECT * FROM treenodes WHERE parent ='#' ORDER BY id;";
+            // CustomTreeNode.toString() - string looks like json
             result = Selector(QUERY_SQL, jdbcTemplate).toString();
             transactionManager.commit(status);
         } catch (DataAccessException e) {
-            System.out.println("Error in creating record, rolling back");
+            //System.out.println("Error in creating record, rolling back");
             transactionManager.rollback(status);
             throw e;
         }
         return result;
     }
 
+    /**
+     * getChildrenNodes
+     * @param nodeId
+     * @return String (json watch CustomTreeNode.toString())
+     */
     public String getChildrenNodes(String nodeId) {
         final String QUERY_SQL = "SELECT * FROM treenodes WHERE parent ='" + nodeId + "' ORDER BY id;";
+        // Hardcoded 2 sec delay for loading child nodes.
         ExecutorService exec = Executors.newCachedThreadPool();
         CountDownLatch latch = new CountDownLatch(1);
-        exec.execute(() -> {
-            try {
-                Thread.sleep(2);
-                latch.countDown();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+        // Start timer
+        if(nodeId.equals("0")){
+            latch.countDown();
+        }else {
+            exec.execute(() -> {
+                try {
+                    Thread.sleep(2000);
+                    latch.countDown();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+        // Getting data meanwhile.
+        // CustomTreeNode.toString() - string looks like json
         String result = Selector(QUERY_SQL, jdbcTemplate).toString();
+        // Wait when timer ends.
         try {
             latch.await();
         } catch (Exception e) {
             e.printStackTrace();
         }
+        // Continue (shutdown exec).
         exec.shutdown();
         return result;
     }
 
-
-
-    public String createNode(String parentId, String nodeName) {
+    /**
+     * createNode
+     * @param parentId
+     * @param nodeName
+     * @return
+     */
+    public synchronized String createNode(String parentId, String nodeName) {
         String nodeId = null;
         int result = 0;
         TransactionDefinition def = new DefaultTransactionDefinition();
         TransactionStatus status = transactionManager.getTransaction(def);
         try {
+            // Generate ID for new node.
             final String QUERY_PRESQL = "SELECT * FROM treenodes WHERE parent ='" + parentId + "' ORDER BY id;";
             List<CustomTreeNode> children = Selector(QUERY_PRESQL, jdbcTemplate);
             if (children.isEmpty()) {
@@ -91,26 +120,30 @@ public class Jdbc {
                 }
             } else {
                 String postfix = children.get(children.size() - 1).getId().substring(parentId.length() + 1);
-                System.out.println("pfix: " + postfix);
-                System.out.println(children);
                 nodeId = parentId + "." + (Integer.parseInt(postfix) + 1);
             }
-            System.out.println(nodeId);
+            // Add new node with new id.
             final String QUERY_SQL =
                     "INSERT INTO treenodes (id , parent , text , children)\n" +
                             "VALUES ('" + nodeId + "' , '" + parentId + "' , '" + nodeName + "' , 'FALSE');";
             jdbcTemplate.update(QUERY_SQL);
             transactionManager.commit(status);
         } catch (DataAccessException e) {
-            System.out.println("Error in creating record, rolling back");
+            //System.out.println("Error in creating record, rolling back");
             transactionManager.rollback(status);
             return "false";
         } catch (Exception e) {
-            throw e;
+            e.printStackTrace();
         }
         return "true";
     }
 
+    /**
+     * editNode
+     * @param nodeId
+     * @param nodeName
+     * @return
+     */
     public String editNode(String nodeId, String nodeName) {
         final String QUERY_SQL = "UPDATE treenodes SET text = '"+nodeName+"' WHERE id = '" + nodeId + "';";
         if(jdbcTemplate.update(QUERY_SQL)>0){
@@ -118,62 +151,85 @@ public class Jdbc {
         }
         return "false";
     }
+
+    /**
+     * moveNode (drag&drop)
+     * @param nodeId
+     * @param newParent
+     * @param oldParent
+     * @return
+     */
     public String moveNode(String nodeId, String newParent, String oldParent){
         TransactionDefinition def = new DefaultTransactionDefinition();
         TransactionStatus status = transactionManager.getTransaction(def);
         try {
-            final String QUERY_CHECKOLDPARENT = "SELECT * FROM treenodes WHERE parent = '" + oldParent + "';";
-            List<CustomTreeNode> nodes = Selector(QUERY_CHECKOLDPARENT, jdbcTemplate);
-            System.out.println(QUERY_CHECKOLDPARENT);
-            if (nodes.size() < 1) {
-                final String QUERY_OLDPARENT = "UPDATE treenodes SET children = 'FALSE' WHERE id = '" + oldParent + "';";
-                jdbcTemplate.update(QUERY_OLDPARENT);
-                System.out.println(QUERY_OLDPARENT);
-            }
+            // Set children (haschildren) field TRUE for new parent.
             final String QUERY_NEWPARENT = "UPDATE treenodes SET children = 'TRUE' WHERE id = '" + newParent + "';";
             jdbcTemplate.update(QUERY_NEWPARENT);
-            System.out.println(QUERY_NEWPARENT);
+            // Set new parent for the node.
             final String QUERY_SQL = "UPDATE treenodes SET parent ='" + newParent + "' WHERE id='"+nodeId+"';";
             jdbcTemplate.update(QUERY_SQL);
-            System.out.println(QUERY_SQL);
+            // Check old node if it has no other children (except moved one).
+            final String QUERY_CHECKOLDPARENT = "SELECT * FROM treenodes WHERE parent = '" + oldParent + "';";
+            List<CustomTreeNode> nodes = Selector(QUERY_CHECKOLDPARENT, jdbcTemplate);
+            if (nodes.size() < 1) {
+                // Set children(haschildren) = false if that was last child :(
+                final String QUERY_OLDPARENT = "UPDATE treenodes SET children = 'FALSE' WHERE id = '" + oldParent + "';";
+                jdbcTemplate.update(QUERY_OLDPARENT);
+            }
+
             transactionManager.commit(status);
         } catch (DataAccessException e) {
-            System.out.println("Error in creating record, rolling back");
+            //System.out.println("Error in creating record, rolling back");
             transactionManager.rollback(status);
             return "false";
         } catch (Exception e) {
-            throw e;
+            e.printStackTrace();
         }
         return "true";
     }
 
+    /**
+     * deleteNode
+     * @param nodeId
+     * @return
+     */
     public String deleteNode(String nodeId) {
         TransactionDefinition def = new DefaultTransactionDefinition();
         TransactionStatus status = transactionManager.getTransaction(def);
         try {
+            // Getting parent ID of target node.
             final String QUERY_GETPARENT = "SELECT parent FROM treenodes WHERE id = ?";
             String parentId = jdbcTemplate.queryForObject(QUERY_GETPARENT, new Object[]{nodeId}, String.class);
-            System.out.println("parent ID: " + parentId);
+            // Check if parent of target node has any children except target node.
             final String QUERY_PRESQL = "SELECT * FROM treenodes WHERE parent = '" + parentId + "';";
             List<CustomTreeNode> nodes = Selector(QUERY_PRESQL, jdbcTemplate);
             if (nodes.size() < 2) {
+                // Set children(haschildren) FALSE if it dont.
                 final String QUERY_SETCHILDREN = "UPDATE treenodes SET children = 'FALSE' WHERE id = '" + parentId + "';";
                 jdbcTemplate.update(QUERY_SETCHILDREN);
             }
+            // Deleting target node.
             final String QUERY_SQL = "DELETE FROM treenodes WHERE id ='" + nodeId + "';";
             jdbcTemplate.update(QUERY_SQL);
             transactionManager.commit(status);
         } catch (DataAccessException e) {
-            System.out.println("Error in creating record, rolling back");
+            //System.out.println("Error in creating record, rolling back");
             transactionManager.rollback(status);
             return "false";
         } catch (Exception e) {
-            throw e;
+            e.printStackTrace();
         }
         return "true";
     }
 
-
+    /**
+     * Selector. Makes treenode list from query result.
+     * Carefull, CustomTreeNode.toString() returns String in json format.
+     * @param query
+     * @param jdbc
+     * @return
+     */
     private List<CustomTreeNode> Selector(String query, JdbcTemplate jdbc) {
         List<CustomTreeNode> treeNodes = jdbcTemplate.query(query, (resultSet, i) -> {
             CustomTreeNode treeNode = new CustomTreeNode();
@@ -185,5 +241,4 @@ public class Jdbc {
         });
         return treeNodes;
     }
-
 }

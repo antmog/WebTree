@@ -1,14 +1,5 @@
 (function () {
     "use strict";
-
-    //////////////////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////
-    //
-    // H E L P E R    F U N C T I O N S
-    //
-    //////////////////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////
-
     /**
      * Function to check if we clicked inside an element with a particular class
      * name.
@@ -58,24 +49,21 @@
         }
     }
 
-    //////////////////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////
-    //
-    // C O R E    F U N C T I O N S
-    //
-    //////////////////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////
+    // C O R E
 
     /**
      * Variables.
      */
-    var actionBlockActive = "actionBlock-active";
-    var textBox = document.querySelector("#textBox");
-    var textOk = document.querySelector("#textOk");
-    var textCancel = document.querySelector("#textCancel");
-    
+    var actionBlockActive = "action-block--active";
+    var actionBlock = document.querySelector("#action-block");
+    var textBox = document.querySelector("#action-block__text-box");
+    var textOk = document.querySelector("#action-block__text-ok");
+    var textCancel = document.querySelector("#action-block__text-cancel");
+    var actionBlockState = 0;
+    var operationResult = document.querySelector("#operation-result");
+
     var action;
-    
+
     var contextMenuClassName = "context-menu";
     var contextMenuItemClassName = "context-menu__item";
     var contextMenuLinkClassName = "context-menu__link";
@@ -103,6 +91,9 @@
      * Initialise our application's code.
      */
     function init() {
+        textBox.Multiline = false;
+        textBox.AcceptsReturn = false;
+        DragAndDropListener();
         ButtonListener();
         contextListener();
         clickListener();
@@ -153,6 +144,7 @@
         window.onkeyup = function (e) {
             if (e.keyCode === 27) {
                 toggleMenuOff();
+                DeActivateTextBoxMenu();
             }
         }
     }
@@ -163,6 +155,7 @@
     function resizeListener() {
         window.onresize = function (e) {
             toggleMenuOff();
+            DeActivateTextBoxMenu();
         };
     }
 
@@ -223,79 +216,125 @@
      */
     function menuItemListener(link) {
         action = link.getAttribute("data-action");
-        if(action === "Delete"){
-            get(taskItemInContext,action,textBox.value);
+        if (action === "Delete") {
+            var getdata = {id: taskItemInContext.getAttribute("id"), action: action};
+            get(getdata);
         }
-        nodeMenu(taskItemInContext,action);
-        console.log(taskItemInContext.getAttribute("id"));
+        nodeMenu(taskItemInContext, action);
         toggleMenuOff();
     };
 
     /**
-     *
+     * Generating textBox/textOk/textCancel menu (textbox + 2 buttons) for the selected node (e).
      * @param data
      */
-    function nodeMenu(e,action) {
+    function nodeMenu(e, action) {
         textBox.value = null;
-        if(action === null){
+        if (action === null) {
             alert("Wrong action!");
-        }else if((action === "Edit")||(action === "Create")){
-            textBox.classList.add(actionBlockActive);
-            textOk.classList.add(actionBlockActive);
-            textCancel.classList.add(actionBlockActive);
+        } else if ((action === "Edit") || (action === "Create")) {
+            ActivateTextBoxMenu();
             var pos = e.childNodes[1].getBoundingClientRect();
-            if(action === "Edit"){
+            if (action === "Edit") {
                 var leftOffset = e.childNodes[1].childNodes[0].offsetWidth;
                 textBox.value = e.childNodes[1].innerText;
-            }else{
+            } else {
                 var leftOffset = e.childNodes[1].offsetWidth;
                 textBox.value = "New Folder";
             }
-            textBox.style.left = pos.left + leftOffset + 'px';
-            textBox.style.top = pos.top + 'px';
-
-            textOk.style.left = textBox.offsetLeft + textBox.offsetWidth + "px";
-            textOk.style.top = textBox.style.top;
-
-            textCancel.style.left = textOk.offsetLeft + textOk.offsetWidth + "px";
-            textCancel.style.top = textOk.style.top;
+            actionBlock.style.left = pos.left + leftOffset + 'px';
+            actionBlock.style.top = pos.top + 'px';
         }
-        
-        
+        $(".action-block__text-box").focus();
+        textBox.selectionStart = textBox.value.length;
     }
-    
-    function get(e,action,nodeName){
+
+    /**
+     * Ajax GET request with "getdata" params
+     * getdata = { param:"value",param1:"value" ... };
+     * @param getdata
+     */
+    function get(getdata) {
         $.ajax({
             type: "get",
             cache: false,
             url: "/jdbc/actionItem/",
             success: function (data) {
-                $('#jstree').jstree(true).refresh();
-                if(data === "true"){
-                    alert("Operation succeed.");
-                }else{
-                    alert("Operation failed.");
+                $('#jstree').jstree(true).refresh(true);
+                if (data === "true") {
+                    operationResult.innerText=getdata.action + ": Operation succeed.";
+                } else {
+                    operationResult.innerText=getdata.action + ": Operation failed.";
                 }
             },
-            data: {id: e.getAttribute("id") , action: action, name: nodeName},
+            data: getdata,
             dataType: "text"
         });
     }
-    
-    function ButtonListener(){
+
+    /**
+     * Listener for buttons and checkbox.
+     * @constructor
+     */
+    function ButtonListener() {
+        $('#action-block__text-box').keydown(function(event){
+            if ((event.keyCode === 13)&&(actionBlockState!==0)){
+                SendAction();
+                DeActivateTextBoxMenu();
+            }
+        });
         textCancel.onclick = function () {
-            textBox.classList.remove(actionBlockActive);
-            textOk.classList.remove(actionBlockActive);
-            textCancel.classList.remove(actionBlockActive);
+            DeActivateTextBoxMenu();
         }
         textOk.onclick = function () {
-            textBox.classList.remove(actionBlockActive);
-            textOk.classList.remove(actionBlockActive);
-            textCancel.classList.remove(actionBlockActive);
-            get(taskItemInContext,action,textBox.value);
+            DeActivateTextBoxMenu();
+            SendAction();
         }
     }
-    
+
+    /**
+     * Function, generating data (getdata) for ajax request for Edit/Create functions.
+     * @constructor
+     */
+    function SendAction(){
+        var getdata = {id: taskItemInContext.getAttribute("id"), action: action, name: textBox.value};
+        get(getdata);
+    }
+
+    /**
+     * Show menu for node.
+     * @constructor
+     */
+    function ActivateTextBoxMenu() {
+        if (actionBlockState !== 1) {
+            actionBlockState = 1;
+            actionBlock.classList.add(actionBlockActive);
+        }
+    }
+
+    /**
+     * Hide menu for node.
+     * @constructor
+     */
+    function DeActivateTextBoxMenu() {
+        if (actionBlockState !== 0) {
+            actionBlockState = 0;
+            $(".action-block__text-box").blur();
+            actionBlock.classList.remove(actionBlockActive);
+        }
+    }
+
+    /**
+     * Listener for drag&drop event + generating data for ajax request.
+     * @constructor
+     */
+    function DragAndDropListener(){
+        $('#jstree').on("move_node.jstree", function (e, data) {
+            var getdata =  {id: data.node.id , action: "Dnd", newParent: data.parent, oldParent: data.old_parent};
+            get(getdata);
+        });
+    }
+
     /**
      * Run the app.
      */

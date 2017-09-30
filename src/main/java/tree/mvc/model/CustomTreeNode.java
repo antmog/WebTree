@@ -8,7 +8,7 @@ public class CustomTreeNode {
     private String id;
     private String parent;
     private String text;
-    private boolean children;
+    private boolean children; // (haschildren?)
 
     public boolean getChildren() {
         return children;

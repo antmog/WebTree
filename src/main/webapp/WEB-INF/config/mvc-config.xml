@@ -2,7 +2,7 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:mvc="http://www.springframework.org/schema/mvc"
-       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:context="http://www.springframework.org/schema/context"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
        http://www.springframework.org/schema/beans/spring-beans.xsd
        http://www.springframework.org/schema/mvc
@@ -10,12 +10,9 @@
 	   http://www.springframework.org/schema/context
 	   http://www.springframework.org/schema/context/spring-context.xsd">
 
-
     <!-- context:component-scan This tag will scan @Component, @Repository, @Service, @Controller
          and also resolves @Autowired and @Qualifier -->
-
     <context:component-scan base-package="tree.mvc" />
-
 
     <!-- ViewResolver bean config for mapping strings to jsp views -->
     <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
@@ -24,6 +21,7 @@
         <property name="suffix" value=".jsp" />
     </bean>
 
+    <!-- Setting interceptors (don't needed in current project but still working -->
     <mvc:interceptors>
         <mvc:interceptor>
             <mvc:mapping path="/*"/>
@@ -31,9 +29,10 @@
         </mvc:interceptor>
     </mvc:interceptors>
 
-    <!--find property file. See bean id='dataSource' -->
+    <!-- Find property file. See bean id='dataSource' -->
     <context:property-placeholder location="classpath:application.properties" />
-    <!-- XML Bean Definitions -->
+
+    <!-- Bean Definitions -->
     <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
         <property name="url" value="${jdbc.url}"/>
         <property name="username" value="${jdbc.username}"/>
@@ -41,18 +40,21 @@
         <property name="driverClassName" value="${jdbc.driverClassName}"/>
     </bean>
 
-    <bean id = "transactionManager"
-          class = "org.springframework.jdbc.datasource.DataSourceTransactionManager">
-        <property name = "dataSource"  ref = "dataSource" />
-    </bean>
-
-    <!-- Definition for studentJDBCTemplate bean -->
-    <bean id = "studentJDBCTemplate"
+    <!-- Definition for jdbcTemplate bean -->
+    <bean id = "jdbcTemplate"
           class = "tree.mvc.jdbc.Jdbc">
         <property name = "dataSource" ref = "dataSource" />
         <property name = "transactionManager" ref = "transactionManager" />
     </bean>
 
+    <bean id = "transactionManager"
+          class = "org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name = "dataSource"  ref = "dataSource" />
+    </bean>
+
+
+
+    <!-- Remapping all resources/ pages to resources/ location -->
     <mvc:resources mapping="/resources/**" location="/resources/"  cache-period="31556926"/>
     <mvc:annotation-driven />
 </beans>
