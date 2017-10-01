@@ -7,8 +7,8 @@
 .action-block {
     display: none;
     position: absolute;
-    margin: 0px;
-    padding: 0px;
+    margin: 0;
+    padding: 0;
 }
 
 .action-block--active {
@@ -22,22 +22,22 @@
     font-size: 14px;
     width: 150px;
     height: 22px;
-    margin: 0px;
-    padding: 0px;
+    margin: 0;
+    padding: 0;
 }
 
 .action-block__text-ok {
     width: 30px;
     height: 23px;
-    margin: 0px;
-    padding: 0px;
+    margin: 0;
+    padding: 0;
 }
 
 .action-block__text-cancel {
     width: 50px;
     height: 23px;
-    margin: 0px;
-    padding: 0px;
+    margin: 0;
+    padding: 0;
 }
 
 
@@ -82,4 +82,15 @@
 .context-menu__link:hover {
     color: #fff;
     background-color: #0066aa;
+}
+
+.delay0{
+    left: 8px;
+    top: 100px;
+    position: absolute;
+}
+.delay2{
+    left: 8px;
+    top: 130px;
+    position: absolute;
 }

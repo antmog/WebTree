@@ -21,6 +21,8 @@ public class Jdbc {
     private JdbcTemplate jdbcTemplate;
     private PlatformTransactionManager transactionManager;
 
+    private int delay = 2000; // on load of node
+
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
         this.jdbcTemplate = new JdbcTemplate(dataSource);
@@ -30,13 +32,20 @@ public class Jdbc {
         this.transactionManager = transactionManager;
     }
 
+    public int getDelay() {
+        return delay;
+    }
+
+    public void setDelay(int delay) {
+        this.delay = delay;
+    }
     /**
      * Select all nodes. (unused)
      * @return
      */
     public String queryAllNodes() {
         final String QUERY_SQL = "SELECT * FROM treenodes ORDER BY id";
-        return Selector(QUERY_SQL, jdbcTemplate).toString();
+        return Selector(QUERY_SQL).toString();
     }
 
     /**
@@ -50,7 +59,7 @@ public class Jdbc {
         try {
             final String QUERY_SQL = "SELECT * FROM treenodes WHERE parent ='#' ORDER BY id;";
             // CustomTreeNode.toString() - string looks like json
-            result = Selector(QUERY_SQL, jdbcTemplate).toString();
+            result = Selector(QUERY_SQL).toString();
             transactionManager.commit(status);
         } catch (DataAccessException e) {
             //System.out.println("Error in creating record, rolling back");
@@ -76,7 +85,7 @@ public class Jdbc {
         }else {
             exec.execute(() -> {
                 try {
-                    Thread.sleep(2000);
+                    Thread.sleep(delay);
                     latch.countDown();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -85,7 +94,7 @@ public class Jdbc {
         }
         // Getting data meanwhile.
         // CustomTreeNode.toString() - string looks like json
-        String result = Selector(QUERY_SQL, jdbcTemplate).toString();
+        String result = Selector(QUERY_SQL).toString();
         // Wait when timer ends.
         try {
             latch.await();
@@ -111,7 +120,7 @@ public class Jdbc {
         try {
             // Generate ID for new node.
             final String QUERY_PRESQL = "SELECT * FROM treenodes WHERE parent ='" + parentId + "' ORDER BY id;";
-            List<CustomTreeNode> children = Selector(QUERY_PRESQL, jdbcTemplate);
+            List<CustomTreeNode> children = Selector(QUERY_PRESQL);
             if (children.isEmpty()) {
                 nodeId = parentId + ".0";
                 final String QUERY_SETCHILDREN = "UPDATE treenodes SET children = 'TRUE' WHERE id = '" + parentId + "';";
@@ -171,7 +180,7 @@ public class Jdbc {
             jdbcTemplate.update(QUERY_SQL);
             // Check old node if it has no other children (except moved one).
             final String QUERY_CHECKOLDPARENT = "SELECT * FROM treenodes WHERE parent = '" + oldParent + "';";
-            List<CustomTreeNode> nodes = Selector(QUERY_CHECKOLDPARENT, jdbcTemplate);
+            List<CustomTreeNode> nodes = Selector(QUERY_CHECKOLDPARENT);
             if (nodes.size() < 1) {
                 // Set children(haschildren) = false if that was last child :(
                 final String QUERY_OLDPARENT = "UPDATE treenodes SET children = 'FALSE' WHERE id = '" + oldParent + "';";
@@ -203,7 +212,7 @@ public class Jdbc {
             String parentId = jdbcTemplate.queryForObject(QUERY_GETPARENT, new Object[]{nodeId}, String.class);
             // Check if parent of target node has any children except target node.
             final String QUERY_PRESQL = "SELECT * FROM treenodes WHERE parent = '" + parentId + "';";
-            List<CustomTreeNode> nodes = Selector(QUERY_PRESQL, jdbcTemplate);
+            List<CustomTreeNode> nodes = Selector(QUERY_PRESQL);
             if (nodes.size() < 2) {
                 // Set children(haschildren) FALSE if it dont.
                 final String QUERY_SETCHILDREN = "UPDATE treenodes SET children = 'FALSE' WHERE id = '" + parentId + "';";
@@ -226,12 +235,10 @@ public class Jdbc {
     /**
      * Selector. Makes treenode list from query result.
      * Carefull, CustomTreeNode.toString() returns String in json format.
-     * @param query
-     * @param jdbc
-     * @return
+     * @return treeNode as list
      */
-    private List<CustomTreeNode> Selector(String query, JdbcTemplate jdbc) {
-        List<CustomTreeNode> treeNodes = jdbcTemplate.query(query, (resultSet, i) -> {
+    private List<CustomTreeNode> Selector(String query) {
+        return jdbcTemplate.query(query, (resultSet, i) -> {
             CustomTreeNode treeNode = new CustomTreeNode();
             treeNode.setId(resultSet.getString("id"));
             treeNode.setText(resultSet.getString("text"));
@@ -239,6 +246,5 @@ public class Jdbc {
             treeNode.setChildren(resultSet.getBoolean("children"));
             return treeNode;
         });
-        return treeNodes;
     }
 }

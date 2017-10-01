@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import tree.mvc.jdbc.Jdbc;
 
+import javax.json.Json;
 import javax.servlet.http.HttpServletRequest;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -21,63 +22,85 @@ import java.util.concurrent.Executors;
 
 @RestController
 public class JdbcController {
+    private Jdbc jdbc;
 
-
+    private final ApplicationContext appContext;
     @Autowired
-    private ApplicationContext appContext;
-
-    Jdbc jdbc;
-
-    private void createJdbcNode(){
-        jdbc=(Jdbc)appContext.getBean("jdbcTemplate");
+    public JdbcController(ApplicationContext appContext) {
+        this.appContext = appContext;
     }
 
-    @RequestMapping(value = "/jdbc/getRoot", method = RequestMethod.GET)
+    private Jdbc getJdbcInstance() {
+        Jdbc localInstance = jdbc;
+        if (localInstance == null) {
+            localInstance = (Jdbc)appContext.getBean("jdbcTemplate");
+        }
+        return localInstance;
+    }
+
+
+
+    @RequestMapping(value = "/jdbc/getRoot", method = RequestMethod.GET, produces = "application/json; charset=utf-8")
     public String getRootsJSON()
     {
         // Creating JDBC node here, when initialising tree.
-        createJdbcNode();
-        return jdbc.getRootNodes();
+        //createJdbcNode();
+        return getJdbcInstance().getRootNodes();
     }
 
-    @RequestMapping(value = "/jdbc/getChildrenJson/", method = RequestMethod.GET)
+    @RequestMapping(value = "/jdbc/getChildrenJson/", method = RequestMethod.GET, produces = "application/json; charset=utf-8")
     public String getChildrenJSON(HttpServletRequest request)
     {
-        return jdbc.getChildrenNodes(request.getParameter("id"));
+        return getJdbcInstance().getChildrenNodes(request.getParameter("id"));
     }
 
-    @RequestMapping(value = "/jdbc/getChildrenJson/{nodeId:.+}", method = RequestMethod.GET)
-    public String getChildrenJSON(@PathVariable(value="nodeId")String nodeId)
-    {
-        return jdbc.getChildrenNodes(nodeId);
-    }
 
-    @RequestMapping(value = "/jdbc/actionItem/", method = RequestMethod.GET)
+
+    @RequestMapping(value = "/jdbc/actionItem/", method = RequestMethod.GET, produces = "application/json; charset=utf-8")
     public String actionItemJSON(HttpServletRequest request)
     {
         switch (request.getParameter("action")) {
             case "Create":
-                return jdbc.createNode(request.getParameter("id"),request.getParameter("name"));
+                return Json.createObjectBuilder().add("result",getJdbcInstance().createNode(request.getParameter("id"),
+                        request.getParameter("name"))).build().toString();
             case "Edit":
                 if(request.getParameter("id").equals("0")){
-                    return "false";
+                    return Json.createObjectBuilder().add("result","false").build().toString();
                 }
-                return jdbc.editNode(request.getParameter("id"),request.getParameter("name"));
+                return Json.createObjectBuilder().add("result",getJdbcInstance().editNode(request.getParameter("id"),
+                        request.getParameter("name"))).build().toString();
             case "Delete":
                 if(request.getParameter("id").equals("0")){
-                    return "false";
+                    return Json.createObjectBuilder().add("result","false").build().toString();
                 }
-                return jdbc.deleteNode(request.getParameter("id"));
+                return Json.createObjectBuilder().add("result",
+                        getJdbcInstance().deleteNode(request.getParameter("id"))).build().toString();
             case "Dnd":
                 if(request.getParameter("newParent").equals("#")){
-                    return "false";
+                    return Json.createObjectBuilder().add("result","false").build().toString();
                 }
-                return jdbc.moveNode(request.getParameter("id"),request.getParameter("newParent"),request.getParameter("oldParent"));
+                return Json.createObjectBuilder().add("result",getJdbcInstance().moveNode(request.getParameter("id"),
+                        request.getParameter("newParent"),request.getParameter("oldParent"))).build().toString();
+            case "Delay":
+                getJdbcInstance().setDelay(Integer.parseInt(request.getParameter("name")));
+                if(getJdbcInstance().getDelay() == Integer.parseInt(request.getParameter("name")) ){
+                    return Json.createObjectBuilder().add("result","delay").build().toString();
+                }
+                return Json.createObjectBuilder().add("result","false").build().toString();
             default:
                 System.out.println("Wrong command.");
                 break;
         }
-        return "false";
+        return Json.createObjectBuilder().add("result","false").build().toString();
+    }
+
+    // unused
+    @RequestMapping(value = "/jdbc/getChildrenJson/{nodeId:.+}", method = RequestMethod.GET)
+    public String getChildrenJSON(@PathVariable(value="nodeId")String nodeId)
+    {
+        //return jdbc.getChildrenNodes(nodeId);
+        System.out.println(nodeId);
+        return null;
     }
 
 }

@@ -1,5 +1,6 @@
 (function () {
     "use strict";
+
     /**
      * Function to check if we clicked inside an element with a particular class
      * name.
@@ -56,9 +57,9 @@
      */
     var actionBlockActive = "action-block--active";
     var actionBlock = document.querySelector("#action-block");
-    var textBox = document.querySelector("#action-block__text-box");
-    var textOk = document.querySelector("#action-block__text-ok");
-    var textCancel = document.querySelector("#action-block__text-cancel");
+    var textBox = document.querySelector(".action-block__text-box");
+    var textOk = document.querySelector(".action-block__text-ok");
+    var textCancel = document.querySelector(".action-block__text-cancel");
     var actionBlockState = 0;
     var operationResult = document.querySelector("#operation-result");
 
@@ -93,8 +94,8 @@
     function init() {
         textBox.Multiline = false;
         textBox.AcceptsReturn = false;
-        DragAndDropListener();
-        ButtonListener();
+        dragAndDropListener();
+        buttonListener();
         contextListener();
         clickListener();
         keyupListener();
@@ -144,7 +145,7 @@
         window.onkeyup = function (e) {
             if (e.keyCode === 27) {
                 toggleMenuOff();
-                DeActivateTextBoxMenu();
+                deActivateTextBoxMenu();
             }
         }
     }
@@ -155,7 +156,7 @@
     function resizeListener() {
         window.onresize = function (e) {
             toggleMenuOff();
-            DeActivateTextBoxMenu();
+            deActivateTextBoxMenu();
         };
     }
 
@@ -174,6 +175,7 @@
      */
     function toggleMenuOff() {
         var clickedElement = null;
+
         if (menuState !== 0) {
             menuState = 0;
             menu.classList.remove(contextMenuActive);
@@ -222,18 +224,19 @@
         }
         nodeMenu(taskItemInContext, action);
         toggleMenuOff();
-    };
+    }
 
     /**
      * Generating textBox/textOk/textCancel menu (textbox + 2 buttons) for the selected node (e).
-     * @param data
+     * @param e
+     * @param action action to perform.
      */
     function nodeMenu(e, action) {
         textBox.value = null;
         if (action === null) {
             alert("Wrong action!");
         } else if ((action === "Edit") || (action === "Create")) {
-            ActivateTextBoxMenu();
+            activateTextBoxMenu();
             var pos = e.childNodes[1].getBoundingClientRect();
             if (action === "Edit") {
                 var leftOffset = e.childNodes[1].childNodes[0].offsetWidth;
@@ -258,54 +261,63 @@
         $.ajax({
             type: "get",
             cache: false,
-            url: "/jdbc/actionItem/",
+            url: "jdbc/actionItem/",
             success: function (data) {
-                $('#jstree').jstree(true).refresh(true);
-                if (data === "true") {
-                    operationResult.innerText=getdata.action + ": Operation succeed.";
+                if (data.result === "true") {
+                    $('#jstree').jstree(true).refresh(true);
+                    operationResult.innerText = getdata.action + ": Operation succeed.";
                 } else {
-                    operationResult.innerText=getdata.action + ": Operation failed.";
+                    $('#jstree').jstree(true).refresh(true);
+                    operationResult.innerText = getdata.action + ": Operation failed.";
+                }
+                if(data.result === "delay"){
+                    window.location.reload();
                 }
             },
             data: getdata,
-            dataType: "text"
+            dataType: "json"
         });
     }
 
     /**
      * Listener for buttons and checkbox.
-     * @constructor
      */
-    function ButtonListener() {
-        $('#action-block__text-box').keydown(function(event){
-            if ((event.keyCode === 13)&&(actionBlockState!==0)){
-                SendAction();
-                DeActivateTextBoxMenu();
+    function buttonListener() {
+        $(".delay0").click(function () {
+            var getdata = {action: "Delay", name: "0"};
+            get(getdata);
+        });
+        $(".delay2").click(function () {
+            var getdata = {action: "Delay", name: "2000"};
+            get(getdata);
+        });
+        $('.action-block__text-box').keydown(function (event) {
+            if ((event.keyCode === 13) && (actionBlockState !== 0)) {
+                sendAction();
+                deActivateTextBoxMenu();
             }
         });
         textCancel.onclick = function () {
-            DeActivateTextBoxMenu();
-        }
+            deActivateTextBoxMenu();
+        };
         textOk.onclick = function () {
-            DeActivateTextBoxMenu();
-            SendAction();
-        }
+            deActivateTextBoxMenu();
+            sendAction();
+        };
     }
-
     /**
      * Function, generating data (getdata) for ajax request for Edit/Create functions.
-     * @constructor
      */
-    function SendAction(){
+    function sendAction() {
         var getdata = {id: taskItemInContext.getAttribute("id"), action: action, name: textBox.value};
         get(getdata);
     }
 
+
     /**
      * Show menu for node.
-     * @constructor
      */
-    function ActivateTextBoxMenu() {
+    function activateTextBoxMenu() {
         if (actionBlockState !== 1) {
             actionBlockState = 1;
             actionBlock.classList.add(actionBlockActive);
@@ -314,9 +326,8 @@
 
     /**
      * Hide menu for node.
-     * @constructor
      */
-    function DeActivateTextBoxMenu() {
+    function deActivateTextBoxMenu() {
         if (actionBlockState !== 0) {
             actionBlockState = 0;
             $(".action-block__text-box").blur();
@@ -326,11 +337,10 @@
 
     /**
      * Listener for drag&drop event + generating data for ajax request.
-     * @constructor
      */
-    function DragAndDropListener(){
+    function dragAndDropListener() {
         $('#jstree').on("move_node.jstree", function (e, data) {
-            var getdata =  {id: data.node.id , action: "Dnd", newParent: data.parent, oldParent: data.old_parent};
+            var getdata = {id: data.node.id, action: "Dnd", newParent: data.parent, oldParent: data.old_parent};
             get(getdata);
         });
     }

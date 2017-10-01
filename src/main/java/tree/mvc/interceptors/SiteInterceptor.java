@@ -15,6 +15,7 @@ public class SiteInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o)
             throws Exception {
+
         //System.out.println("SiteInterceptor preHandle");
         return true;
     }
