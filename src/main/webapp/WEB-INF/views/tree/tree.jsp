@@ -13,7 +13,7 @@
     <link href="${treeCss}" rel="stylesheet"/>
 </head>
 <body>
-<h2>Welcome.Огонь</h2>
+<h2>Welcome.</h2>
 <div id="tree-container" class="tree-container">
     <div id="jstree">
     </div>

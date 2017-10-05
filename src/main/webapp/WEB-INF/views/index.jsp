@@ -7,7 +7,6 @@
     <!-- 2 load the theme CSS file -->
 </head>
 <body>
-Огонь
 <h3><a href="tree">Tree Application (click me).</a></h3>
 </body>
 </html>
