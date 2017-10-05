@@ -64,13 +64,13 @@ maven,java,js,css,jsp,PostgreSQL(+trigger),tomcat,jQuery(jsTree) used
 
 Application view:
 
-[How to use video] 
+[videoguide] 
 
 ![view](https://pp.userapi.com/c841326/v841326236/25c9d/lMKU_AT1kZU.jpg)
 
 [//]: #
 
-[How to use video]: <https://youtu.be/KaSS2k5O9-jM>
+[videoguide]: <https://youtu.be/KaSS2k5O9-jM>
 [.war file]: <https://vk.com/doc1577215_451542032?hash=576d4d57a0bedd97f4&dl=91d29e617cde77571d>
 [PostgreSQL]:  <https://www.postgresql.org/download>
 [Apache Tomcat Server 8.5]: <https://tomcat.apache.org/download-80.cgi>
