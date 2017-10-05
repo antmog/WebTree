@@ -62,9 +62,9 @@ maven,java,js,css,jsp,PostgreSQL(+trigger),tomcat,jQuery(jsTree) used
 
 ## About 
 
-Application view:
-
 [videoguide] 
+
+Application view:
 
 ![view](https://pp.userapi.com/c841326/v841326236/25c9d/lMKU_AT1kZU.jpg)
 
