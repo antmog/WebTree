@@ -49,6 +49,7 @@ To get database/chose server read Installing / Getting started.
 * User can add/edit/delete tree nodes
 * DND (Drag and drop) allowed
 * Data attached to database
+* Escape/enter listeners for Create/Edit folder
 
 ## Notes
 
