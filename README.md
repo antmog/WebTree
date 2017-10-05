@@ -53,6 +53,7 @@ To get database/chose server read Installing / Getting started.
 ## Notes
 
 * CSS may look ugly cause of platform issues...
+* application_context.xml doesnt work right aswell (mvc_config.xml has all functionality)
 
 ## Contributing
 
