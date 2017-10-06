@@ -4,6 +4,12 @@ Page, displaying file tree structure.
 
 ## Installing / Getting started
 
+If test server is online, you can try to access app, using the link below:
+
+[Test server]
+
+Otherwise try:
+
 * Download [.war file]
 * Download [Apache Tomcat Server 8.5]
 * Download [PostgreSQL]
@@ -75,3 +81,4 @@ Application view:
 [PostgreSQL]:  <https://www.postgresql.org/download>
 [Apache Tomcat Server 8.5]: <https://tomcat.apache.org/download-80.cgi>
 [treeDB.backup]: <https://vk.com/doc1577215_451540539?hash=c066326372120b7872&dl=4cd1695c8b2321fca8>
+[Test server]: <http://188.243.228.19:8080/web-tree-1_1/tree>
