@@ -24,6 +24,7 @@
     height: 22px;
     margin: 0;
     padding: 0;
+    vertical-align: top;
 }
 
 .action-block__text-ok {
@@ -31,6 +32,7 @@
     height: 23px;
     margin: 0;
     padding: 0;
+    vertical-align: top;
 }
 
 .action-block__text-cancel {
@@ -38,6 +40,7 @@
     height: 23px;
     margin: 0;
     padding: 0;
+    vertical-align: top;
 }
 
 
