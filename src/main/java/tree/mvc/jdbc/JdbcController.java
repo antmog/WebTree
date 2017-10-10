@@ -22,7 +22,7 @@ import java.util.concurrent.Executors;
 
 @RestController
 public class JdbcController {
-    private Jdbc jdbc;
+    private volatile Jdbc jdbc;
 
     private final ApplicationContext appContext;
     @Autowired
@@ -31,11 +31,10 @@ public class JdbcController {
     }
 
     private Jdbc getJdbcInstance() {
-        Jdbc localInstance = jdbc;
-        if (localInstance == null) {
-            localInstance = (Jdbc)appContext.getBean("jdbcTemplate");
+        if (jdbc == null) {
+            jdbc = (Jdbc)appContext.getBean("jdbcTemplate");
         }
-        return localInstance;
+        return jdbc;
     }
 
 
