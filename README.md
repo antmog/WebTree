@@ -77,7 +77,7 @@ Application view:
 [//]: #
 
 [videoguide]: <https://youtu.be/KaS2k5O9-jM>
-[.war file]: <https://vk.com/doc1577215_451542032?hash=576d4d57a0bedd97f4&dl=91d29e617cde77571d>
+[.war file]: <https://vk.com/doc1577215_451713528?hash=24505c283e04da7207&dl=12ea0dc28524fa4efa>
 [PostgreSQL]:  <https://www.postgresql.org/download>
 [Apache Tomcat Server 8.5]: <https://tomcat.apache.org/download-80.cgi>
 [treeDB.backup]: <https://vk.com/doc1577215_451540539?hash=c066326372120b7872&dl=4cd1695c8b2321fca8>
