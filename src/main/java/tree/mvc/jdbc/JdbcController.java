@@ -22,21 +22,14 @@ import java.util.concurrent.Executors;
 
 @RestController
 public class JdbcController {
-    private volatile Jdbc jdbc;
-
+    private final Jdbc jdbc;
     private final ApplicationContext appContext;
+
     @Autowired
     public JdbcController(ApplicationContext appContext) {
         this.appContext = appContext;
+        this.jdbc = (Jdbc)appContext.getBean("jdbcTemplate");
     }
-
-    private Jdbc getJdbcInstance() {
-        if (jdbc == null) {
-            jdbc = (Jdbc)appContext.getBean("jdbcTemplate");
-        }
-        return jdbc;
-    }
-
 
 
     @RequestMapping(value = "/jdbc/getRoot", method = RequestMethod.GET, produces = "application/json; charset=utf-8")
@@ -44,13 +37,13 @@ public class JdbcController {
     {
         // Creating JDBC node here, when initialising tree.
         //createJdbcNode();
-        return getJdbcInstance().getRootNodes();
+        return jdbc.getRootNodes();
     }
 
     @RequestMapping(value = "/jdbc/getChildrenJson/", method = RequestMethod.GET, produces = "application/json; charset=utf-8")
     public String getChildrenJSON(HttpServletRequest request)
     {
-        return getJdbcInstance().getChildrenNodes(request.getParameter("id"));
+        return jdbc.getChildrenNodes(request.getParameter("id"));
     }
 
 
@@ -60,29 +53,29 @@ public class JdbcController {
     {
         switch (request.getParameter("action")) {
             case "Create":
-                return Json.createObjectBuilder().add("result",getJdbcInstance().createNode(request.getParameter("id"),
+                return Json.createObjectBuilder().add("result",jdbc.createNode(request.getParameter("id"),
                         request.getParameter("name"))).build().toString();
             case "Edit":
                 if(request.getParameter("id").equals("0")){
                     return Json.createObjectBuilder().add("result","false").build().toString();
                 }
-                return Json.createObjectBuilder().add("result",getJdbcInstance().editNode(request.getParameter("id"),
+                return Json.createObjectBuilder().add("result",jdbc.editNode(request.getParameter("id"),
                         request.getParameter("name"))).build().toString();
             case "Delete":
                 if(request.getParameter("id").equals("0")){
                     return Json.createObjectBuilder().add("result","false").build().toString();
                 }
                 return Json.createObjectBuilder().add("result",
-                        getJdbcInstance().deleteNode(request.getParameter("id"))).build().toString();
+                        jdbc.deleteNode(request.getParameter("id"))).build().toString();
             case "Dnd":
                 if(request.getParameter("newParent").equals("#")){
                     return Json.createObjectBuilder().add("result","false").build().toString();
                 }
-                return Json.createObjectBuilder().add("result",getJdbcInstance().moveNode(request.getParameter("id"),
+                return Json.createObjectBuilder().add("result",jdbc.moveNode(request.getParameter("id"),
                         request.getParameter("newParent"),request.getParameter("oldParent"))).build().toString();
             case "Delay":
-                getJdbcInstance().setDelay(Integer.parseInt(request.getParameter("name")));
-                if(getJdbcInstance().getDelay() == Integer.parseInt(request.getParameter("name")) ){
+                jdbc.setDelay(Integer.parseInt(request.getParameter("name")));
+                if(jdbc.getDelay() == Integer.parseInt(request.getParameter("name")) ){
                     return Json.createObjectBuilder().add("result","delay").build().toString();
                 }
                 return Json.createObjectBuilder().add("result","false").build().toString();
